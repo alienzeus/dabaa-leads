@@ -95,6 +95,24 @@ app.get('/api/leads', async (req, res) => {
     }
 });
 
+// Get Single Lead
+app.get('/api/leads/:id', async (req, res) => {
+    try {
+        // Validate ID format first
+        if (!mongoose.Types.ObjectId.isValid(req.params.id)) {
+            return res.status(400).json({ error: 'Invalid lead ID format' });
+        }
+
+        const lead = await Lead.findById(req.params.id);
+        if (!lead) {
+            return res.status(404).json({ error: 'Lead not found' });
+        }
+        res.json(lead);
+    } catch (err) {
+        res.status(500).json({ error: err.message });
+    }
+});
+
 // Update Lead
 app.put('/api/leads/:id', async (req, res) => {
     try {

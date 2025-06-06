@@ -262,21 +262,23 @@ async function deleteLead(leadId) {
 }
 
 // Edit Lead
+// Edit Lead
 async function editLead(leadId) {
     try {
         const response = await fetch(`/api/leads/${leadId}`);
         if (!response.ok) {
-            throw new Error('Failed to fetch lead');
+            const errorData = await response.json(); // Get error details from response
+            throw new Error(errorData.error || 'Failed to fetch lead');
         }
         const lead = await response.json();
         
         // Fill the form with the lead data
-        document.getElementById('businessName').value = lead.businessName;
-        document.getElementById('category').value = lead.category;
-        document.getElementById('email').value = lead.email;
-        document.getElementById('phone').value = lead.phone;
-        document.getElementById('address').value = lead.address;
-        document.getElementById('website').value = lead.website;
+        document.getElementById('businessName').value = lead.businessName || '';
+        document.getElementById('category').value = lead.category || '';
+        document.getElementById('email').value = lead.email || '';
+        document.getElementById('phone').value = lead.phone || '';
+        document.getElementById('address').value = lead.address || '';
+        document.getElementById('website').value = lead.website || '';
         
         // Change the form to update mode
         leadForm.dataset.mode = 'update';
@@ -290,7 +292,7 @@ async function editLead(leadId) {
         leadForm.scrollIntoView({ behavior: 'smooth' });
     } catch (error) {
         console.error('Error:', error);
-        showNotification('Failed to load lead for editing', 'error');
+        showNotification(error.message || 'Failed to load lead for editing', 'error');
     }
 }
 
