@@ -1,0 +1,104 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>DABAA - Login</title>
+    <link rel="icon" href="https://i.postimg.cc/brh2RbTS/generated-icon.png">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <script src="https://kit.fontawesome.com/6d2ea823d0.js" crossorigin="anonymous"></script>
+    <script src="https://cdn.tailwindcss.com"></script>
+
+    <style>
+        body {
+            font-family: 'Poppins', sans-serif;
+            background-image: url('https://images.unsplash.com/photo-1622737133809-d95047b9e673?q=80&w=1932&auto=format&fit=crop&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D');
+            background-size: cover;
+            background-position: center;
+            background-attachment: fixed;
+        }
+        
+        .glass-card {
+            background: rgba(255, 255, 255, 0.15);
+            backdrop-filter: blur(10px);
+            -webkit-backdrop-filter: blur(10px);
+            border-radius: 20px;
+            border: 1px solid rgba(255, 255, 255, 0.18);
+            box-shadow: 0 8px 32px 0 rgba(31, 38, 135, 0.37);
+        }
+        
+        .input-field {
+            background: rgba(255, 255, 255, 0.2);
+            border: none;
+            border-radius: 12px;
+            color: white;
+        }
+        
+        .input-field::placeholder {
+            color: rgba(255, 255, 255, 0.7);
+        }
+        
+        .input-field:focus {
+            background: rgba(255, 255, 255, 0.3);
+            outline: none;
+            box-shadow: 0 0 0 2px rgba(255, 255, 255, 0.3);
+        }
+    </style>
+</head>
+<body class="min-h-screen flex items-center justify-center p-4">
+    <div class="glass-card p-10 w-full max-w-md text-center">
+        <div class="flex justify-center mb-6">
+            <div class="bg-white bg-opacity-20 p-4 rounded-full">
+                <i class="fas fa-lock text-white text-4xl"></i>
+            </div>
+        </div>
+        
+        <h1 class="text-3xl font-bold text-white mb-2">Welcome to</h1>
+        <h2 class="text-5xl font-bold text-white mb-8">DABAA</h2>
+        
+        <form id="loginForm" class="space-y-6">
+            <div class="relative">
+                <i class="fas fa-key absolute left-4 top-1/2 transform -translate-y-1/2 text-white"></i>
+                <input type="password" id="authPin" class="input-field pl-12 pr-4 py-3 w-full text-lg" 
+                       placeholder="Enter Authentication Pin" required>
+            </div>
+            
+            <button type="submit" class="bg-gradient-to-r from-blue-500 to-purple-600 hover:from-blue-600 hover:to-purple-700 
+                                      text-white font-semibold py-3 px-6 rounded-xl w-full 
+                                      flex items-center justify-center space-x-2 
+                                      transition-all duration-300 transform hover:scale-105 shadow-lg">
+                <i class="fas fa-sign-in-alt"></i>
+                <span>Login</span>
+            </button>
+        </form>
+    </div>
+
+    <script>
+        document.getElementById("loginForm").addEventListener("submit", async function(event) {
+            event.preventDefault();
+            const pin = document.getElementById("authPin").value;
+
+            try {
+                const response = await fetch('/api/auth', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ pin })
+                });
+                
+                const data = await response.json();
+                
+                if (data.success) {
+                    window.location.href = '/dashboard';
+                } else {
+                    alert("Invalid Pin. Try again!");
+                }
+            } catch (error) {
+                console.error("Error:", error);
+                alert("An error occurred. Please try again.");
+            }
+        });
+    </script>
+</body>
+</html>
