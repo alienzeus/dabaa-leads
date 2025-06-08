@@ -24,13 +24,18 @@ const CategorySchema = new mongoose.Schema({
     createdAt: { type: Date, default: Date.now }
 });
 
+// Update the LeadSchema in server.js
 const LeadSchema = new mongoose.Schema({
     businessName: { type: String, required: true },
     category: { type: String, required: true },
     email: { type: String, required: true },
     phone: { type: String, required: true },
     address: { type: String, required: true },
-    website: { type: String }
+    website: { type: String },
+    socialMedia: [{
+        platform: String,
+        url: String
+    }]
 }, { timestamps: true });
 
 const Category = mongoose.model('Category', CategorySchema);

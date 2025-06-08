@@ -113,7 +113,8 @@ leadForm.addEventListener("submit", async function(event) {
         email: document.getElementById("email").value,
         phone: document.getElementById("phone").value,
         address: document.getElementById("address").value,
-        website: document.getElementById("website").value
+        website: document.getElementById("website").value,
+        socialMedia: getSocialMediaData()
     };
 
     try {
@@ -149,6 +150,7 @@ leadForm.addEventListener("submit", async function(event) {
         
         // Reset the form
         this.reset();
+        document.getElementById('socialMediaContainer').innerHTML = '';
         if (this.dataset.mode === 'update') {
             delete this.dataset.mode;
             delete this.dataset.leadId;
@@ -205,6 +207,16 @@ async function fetchLeads() {
                         ${lead.website ? `<a href="${lead.website}" target="_blank" class="text-blue-600 hover:text-blue-800 text-sm">
                             <i class="fas fa-external-link-alt mr-1"></i> Visit
                         </a>` : 'N/A'}
+                        ${lead.socialMedia?.length > 0 ? `
+                            <div class="mt-1 flex flex-wrap gap-1">
+                                ${lead.socialMedia.map(sm => `
+                                    <a href="${sm.url}" target="_blank" class="text-xs px-2 py-1 rounded-full ${getSocialMediaColorClass(sm.platform)}">
+                                        <i class="${getSocialMediaIconClass(sm.platform)} mr-1"></i>
+                                        ${sm.platform}
+                                    </a>
+                                `).join('')}
+                            </div>
+                        ` : ''}
                     </td>
                     <td class="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
                         <button onclick="editLead('${lead._id}')" 
@@ -240,6 +252,81 @@ function getCategoryColorClass(category) {
     }
 }
 
+// Social Media Helper Functions
+function getSocialMediaColorClass(platform) {
+    const colors = {
+        'Facebook': 'bg-blue-100 text-blue-800',
+        'Instagram': 'bg-pink-100 text-pink-800',
+        'Twitter': 'bg-sky-100 text-sky-800',
+        'LinkedIn': 'bg-blue-200 text-blue-800',
+        'YouTube': 'bg-red-100 text-red-800',
+        'TikTok': 'bg-black text-white',
+        'Pinterest': 'bg-red-100 text-red-800'
+    };
+    return colors[platform] || 'bg-gray-100 text-gray-800';
+}
+
+function getSocialMediaIconClass(platform) {
+    const icons = {
+        'Facebook': 'fab fa-facebook-f',
+        'Instagram': 'fab fa-instagram',
+        'Twitter': 'fab fa-twitter',
+        'LinkedIn': 'fab fa-linkedin-in',
+        'YouTube': 'fab fa-youtube',
+        'TikTok': 'fab fa-tiktok',
+        'Pinterest': 'fab fa-pinterest-p'
+    };
+    return icons[platform] || 'fas fa-share-alt';
+}
+
+// Social Media Field Management
+function addSocialMediaField(socialMedia = { platform: '', url: '' }) {
+    const container = document.getElementById('socialMediaContainer');
+    const fieldId = Date.now(); // Unique ID for each field
+    
+    const fieldHTML = `
+        <div class="social-media-field flex items-end space-x-3" id="sm-${fieldId}">
+            <div class="flex-1">
+                <select class="w-full p-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 social-platform">
+                    <option value="">Select Platform</option>
+                    <option value="Facebook" ${socialMedia.platform === 'Facebook' ? 'selected' : ''}>Facebook</option>
+                    <option value="Instagram" ${socialMedia.platform === 'Instagram' ? 'selected' : ''}>Instagram</option>
+                    <option value="Twitter" ${socialMedia.platform === 'Twitter' ? 'selected' : ''}>Twitter</option>
+                    <option value="LinkedIn" ${socialMedia.platform === 'LinkedIn' ? 'selected' : ''}>LinkedIn</option>
+                    <option value="YouTube" ${socialMedia.platform === 'YouTube' ? 'selected' : ''}>YouTube</option>
+                    <option value="TikTok" ${socialMedia.platform === 'TikTok' ? 'selected' : ''}>TikTok</option>
+                    <option value="Pinterest" ${socialMedia.platform === 'Pinterest' ? 'selected' : ''}>Pinterest</option>
+                </select>
+            </div>
+            <div class="flex-1">
+                <input type="url" value="${socialMedia.url || ''}" 
+                       class="w-full p-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 social-url" 
+                       placeholder="Profile URL">
+            </div>
+            <button type="button" onclick="removeSocialMediaField('sm-${fieldId}')" 
+                    class="text-red-500 hover:text-red-700 p-2">
+                <i class="fas fa-times"></i>
+            </button>
+        </div>
+    `;
+    
+    container.insertAdjacentHTML('beforeend', fieldHTML);
+}
+
+function removeSocialMediaField(id) {
+    document.getElementById(id)?.remove();
+}
+
+function getSocialMediaData() {
+    const fields = document.querySelectorAll('.social-media-field');
+    return Array.from(fields).map(field => {
+        return {
+            platform: field.querySelector('.social-platform').value,
+            url: field.querySelector('.social-url').value
+        };
+    }).filter(sm => sm.platform && sm.url); // Only return fields with both values
+}
+
 // Delete Lead
 async function deleteLead(leadId) {
     if(!confirm('Are you sure you want to delete this lead?')) return;
@@ -262,12 +349,11 @@ async function deleteLead(leadId) {
 }
 
 // Edit Lead
-// Edit Lead
 async function editLead(leadId) {
     try {
         const response = await fetch(`/api/leads/${leadId}`);
         if (!response.ok) {
-            const errorData = await response.json(); // Get error details from response
+            const errorData = await response.json();
             throw new Error(errorData.error || 'Failed to fetch lead');
         }
         const lead = await response.json();
@@ -279,6 +365,14 @@ async function editLead(leadId) {
         document.getElementById('phone').value = lead.phone || '';
         document.getElementById('address').value = lead.address || '';
         document.getElementById('website').value = lead.website || '';
+        
+        // Clear existing social media fields
+        document.getElementById('socialMediaContainer').innerHTML = '';
+        
+        // Add social media fields if they exist
+        if (lead.socialMedia?.length > 0) {
+            lead.socialMedia.forEach(sm => addSocialMediaField(sm));
+        }
         
         // Change the form to update mode
         leadForm.dataset.mode = 'update';
@@ -306,14 +400,15 @@ exportBtn.addEventListener('click', async function() {
         const leads = await response.json();
         
         // Create CSV content
-        const headers = ['Business Name', 'Category', 'Email', 'Phone', 'Address', 'Website'];
+        const headers = ['Business Name', 'Category', 'Email', 'Phone', 'Address', 'Website', 'Social Media'];
         const rows = leads.map(lead => [
             `"${lead.businessName}"`,
             `"${lead.category}"`,
             `"${lead.email}"`,
             `"${lead.phone}"`,
             `"${lead.address}"`,
-            `"${lead.website || ''}"`
+            `"${lead.website || ''}"`,
+            `"${lead.socialMedia?.map(sm => `${sm.platform}: ${sm.url}`).join(' | ') || ''}"`
         ]);
         
         const csvContent = [
